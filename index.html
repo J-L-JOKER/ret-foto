@@ -6,6 +6,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#1a0033">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}html,body{min-height:100%}
@@ -36,7 +37,7 @@ h1 span{color:#ffe600;text-shadow:0 2px 0 #ff9800,0 4px 0 #ff2d95,0 6px 0 #7a00f
 input{width:100%;padding:14px;border-radius:14px;border:2px solid #ddd;font-size:16px;margin:6px 0;background:rgba(255,255,255,.95)}
 .btn-chico{width:auto;padding:12px 22px;font-size:16px;margin:6px 0}
 video,img#preview{width:100%;border-radius:16px;background:#000;max-height:420px;object-fit:cover}
-#grid{display:grid;gap:4px;margin:12px auto;max-width:420px;aspect-ratio:1}
+#grid{display:grid;gap:4px;margin:12px auto;max-width:420px;width:100%}
 .tile{border-radius:8px;overflow:hidden;background:#ddd;cursor:pointer;border:3px solid transparent}
 .tile.sel{border-color:#ff2d95;transform:scale(.96)}
 .tile img{width:100%;height:100%;display:block}
@@ -130,13 +131,13 @@ async function startCam(){show('p2');await openCam();renderFilters();}
 async function openCam(){if(stream)stream.getTracks().forEach(t=>t.stop());try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false});let v=document.getElementById('vid');v.srcObject=stream;v.style.filter=currentFilter;}catch(e){alert('Dale permiso a la cámara y abre desde https:// (Vercel/Netlify). Error: '+e.message);}}
 function switchCam(){facing=(facing==='user'?'environment':'user');openCam();}
 function takeWithCountdown(){hablar('Sonrie, tres, dos, uno');let c=document.getElementById('count');c.classList.remove('hidden');let n=3;c.textContent=n;let iv=setInterval(()=>{n--;if(n>0)c.textContent=n;else{clearInterval(iv);c.classList.add('hidden');snap();}},700);}
-function snap(){let v=document.getElementById('vid'),cv=document.getElementById('cv');cv.width=v.videoWidth||640;cv.height=v.videoHeight||480;let ctx=cv.getContext('2d');ctx.filter=currentFilter;if(facing==='user'){ctx.translate(cv.width,0);ctx.scale(-1,1);}ctx.drawImage(v,0,0,cv.width,cv.height);photo=cv.toDataURL('image/jpeg',.9);document.getElementById('preview').src=photo;document.getElementById('preview').style.filter='none';document.getElementById('helpImg').src=photo;if(stream)stream.getTracks().forEach(t=>t.stop());show('p3');}
+function snap(){let v=document.getElementById('vid'),cv=document.getElementById('cv');cv.width=v.videoWidth||640;cv.height=v.videoHeight||480;let ctx=cv.getContext('2d');ctx.filter=currentFilter;if(facing==='user'){ctx.translate(cv.width,0);ctx.scale(-1,1);}ctx.drawImage(v,0,0,cv.width,cv.height);photo=cv.toDataURL('image/jpeg',.9);window.photoW=cv.width;window.photoH=cv.height;document.getElementById('preview').src=photo;document.getElementById('preview').style.filter='none';document.getElementById('helpImg').src=photo;if(stream)stream.getTracks().forEach(t=>t.stop());show('p3');}
 function retake(){show('p2');openCam();}
 function setDiff(n,sec){N=n;total=sec;show('p4');}
 function startGame(){hablar('A armar el rompecabezas, correle que se acaba el tiempo');show('p5');build();left=total;update();timerInt=setInterval(()=>{left--;update();if(left<=0){clearInterval(timerInt);lastResult='¡PERDÍ en RETO FOTO! Me tocó castigo, ¿te atreves a jugar?';hablar('Se acabo el tiempo, te toca castigo, escoge tu carta');document.getElementById('tituloCartas').textContent='¡PERDISTE EL RETO!';document.getElementById('subCartas').textContent='Solo el perdedor elige una carta. Toca una y se voltea.';show('pLose');buildCartas();playSound();}},1000);}
 function update(){let m=Math.floor(left/60),s=left%60;document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');document.getElementById('fill').style.width=(left/total*100)+'%';}
 function build(){order=Array.from({length:N*N},(_,i)=>i);for(let i=order.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}render();}
-function render(){let g=document.getElementById('grid');g.style.gridTemplateColumns=`repeat(${N},1fr)`;g.innerHTML='';order.forEach((orig,idx)=>{let d=document.createElement('div');d.className='tile'+(idx===sel?' sel':'');let img=document.createElement('img');img.src=photo;let r=Math.floor(orig/N),c=orig%N;img.style.width=(N*100)+'%';img.style.height=(N*100)+'%';img.style.maxWidth='none';img.style.objectFit='cover';img.style.objectPosition=`${N===1?50:c*100/(N-1)}% ${N===1?50:r*100/(N-1)}%`;img.style.aspectRatio='1';d.appendChild(img);d.onclick=()=>{if(sel===-1){sel=idx;render();}else{[order[sel],order[idx]]=[order[idx],order[sel]];sel=-1;render();check();}};g.appendChild(d);});}
+function render(){let g=document.getElementById('grid');g.style.gridTemplateColumns=`repeat(${N},1fr)`;if(window.photoW&&window.photoH){g.style.aspectRatio=window.photoW+'/'+window.photoH;}else{g.style.aspectRatio='1';}g.innerHTML='';order.forEach((orig,idx)=>{let d=document.createElement('div');d.className='tile'+(idx===sel?' sel':'');let r=Math.floor(orig/N),c=orig%N;d.style.backgroundImage=`url(${photo})`;d.style.backgroundSize=`${N*100}% ${N*100}%`;d.style.backgroundPosition=`${N===1?50:c*100/(N-1)}% ${N===1?50:r*100/(N-1)}%`;d.style.backgroundRepeat='no-repeat';d.onclick=()=>{if(sel===-1){sel=idx;render();}else{[order[sel],order[idx]]=[order[idx],order[sel]];sel=-1;render();check();}};g.appendChild(d);});}
 function check(){if(order.every((v,i)=>v===i)){clearInterval(timerInt);hablar('Lo lograste, te salvaste del castigo');lastResult='¡GANÉ en RETO FOTO! ¡Me salvé del castigo! ¿Te atreves a jugar?';show('pWin');playSound();}}
 function showHelp(){let h=document.getElementById('help');h.classList.remove('hidden');setTimeout(()=>h.classList.add('hidden'),3000);}
 function playSound(){try{let a=new (window.AudioContext||window.webkitAudioContext)();[523,659,784,1046].forEach((f,i)=>{let o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=f;o.start(a.currentTime+i*.15);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.15+.4);});}catch(e){}}
